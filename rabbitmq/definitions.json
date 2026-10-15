@@ -1,0 +1,79 @@
+{
+  "exchanges": [
+    {
+      "name": "pagos.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "pagos.dlx",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "pagos.banco",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic",
+        "x-dead-letter-exchange": "pagos.dlx"
+      }
+    },
+    {
+      "name": "pagos.erp",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic",
+        "x-dead-letter-exchange": "pagos.dlx"
+      }
+    },
+    {
+      "name": "pagos.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "pagos.exchange",
+      "vhost": "/",
+      "destination": "pagos.banco",
+      "destination_type": "queue",
+      "routing_key": "banco",
+      "arguments": {}
+    },
+    {
+      "source": "pagos.exchange",
+      "vhost": "/",
+      "destination": "pagos.erp",
+      "destination_type": "queue",
+      "routing_key": "erp",
+      "arguments": {}
+    },
+    {
+      "source": "pagos.dlx",
+      "vhost": "/",
+      "destination": "pagos.dlq",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ]
+}

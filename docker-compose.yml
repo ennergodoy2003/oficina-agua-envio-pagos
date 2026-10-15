@@ -1,2 +1,48 @@
-# Se completa en HU-42 (RabbitMQ) y en las HU del producer y el consumer.
-services: {}
+# Feature 3: envío de pagos. Infraestructura local.
+# Requiere un archivo .env (copia de .env.example).
+
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?falta RABBITMQ_USER en .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD en .env}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Contenedor de un solo uso: aplica exchanges, colas y bindings (HU-42).
+  rabbitmq-init:
+    image: curlimages/curl
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      RABBITMQ_USER: ${RABBITMQ_USER:?falta RABBITMQ_USER en .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?falta RABBITMQ_PASSWORD en .env}
+    volumes:
+      - ./rabbitmq/definitions.json:/definitions.json:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        curl --fail --silent --show-error
+        --retry 10 --retry-delay 3 --retry-connrefused
+        -u "$$RABBITMQ_USER:$$RABBITMQ_PASSWORD"
+        -H "content-type: application/json"
+        -X POST http://rabbitmq:15672/api/definitions
+        --data-binary @/definitions.json
+        && echo "Topologia de RabbitMQ aplicada"
+
+volumes:
+  rabbitmq_data:
