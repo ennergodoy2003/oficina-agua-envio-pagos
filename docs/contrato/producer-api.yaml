@@ -1,0 +1,143 @@
+openapi: 3.0.3
+
+info:
+  title: Oficina del Agua - Producer de envio de pagos
+  version: 0.1.0
+  description: |
+    Contrato del producer de la Feature 3. Disenio preliminar.
+
+    El producer consulta los pagos pendientes de envio y publica un mensaje
+    por pago y destino (banco, ERP) en RabbitMQ. No llama a las APIs externas:
+    eso lo hacen los consumers.
+
+servers:
+  - url: http://localhost:8081
+    description: Ejecucion local
+
+tags:
+  - name: Envios
+    description: Disparo y consulta del envio de pagos
+
+paths:
+  /api/v1/envios:
+    post:
+      tags: [Envios]
+      operationId: dispararEnvio
+      summary: Publica en RabbitMQ los pagos pendientes de envio
+      description: |
+        Busca pagos con envio pendiente y publica un mensaje por pago y destino.
+        Procesa como maximo `limite` pagos por llamada (lote pequeno).
+        Si RabbitMQ no responde, el pago NO se pierde: sigue pendiente y se
+        responde 503.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisparoEnvioRequest'
+      responses:
+        '200':
+          description: Lote procesado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisparoEnvioResponse'
+        '400':
+          description: Parametros invalidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: RabbitMQ no responde. Los pagos siguen pendientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/pagos/{pagoId}/envios:
+    get:
+      tags: [Envios]
+      operationId: consultarEnviosDePago
+      summary: Intentos de envio de un pago, por destino
+      parameters:
+        - name: pagoId
+          in: path
+          required: true
+          description: Identificador del pago en el monolito
+          schema:
+            type: string
+            example: EQA-000123
+      responses:
+        '200':
+          description: Intentos registrados (lista vacia si no hay)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IntentoEnvio'
+        '404':
+          description: No existe el pago
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Destino:
+      type: string
+      enum: [BANCO, ERP]
+
+    DisparoEnvioRequest:
+      type: object
+      properties:
+        limite:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Maximo de pagos a procesar en esta llamada
+
+    DisparoEnvioResponse:
+      type: object
+      required: [pagosEncontrados, mensajesPublicados]
+      properties:
+        pagosEncontrados:
+          type: integer
+          example: 5
+        mensajesPublicados:
+          type: integer
+          description: Uno por pago y destino
+          example: 10
+
+    IntentoEnvio:
+      type: object
+      required: [pagoId, destino, resultado, fecha]
+      properties:
+        pagoId:
+          type: string
+          example: EQA-000123
+        destino:
+          $ref: '#/components/schemas/Destino'
+        resultado:
+          type: string
+          enum: [EXITO, FALLO]
+        fecha:
+          type: string
+          format: date-time
+        motivoFallo:
+          type: string
+          description: Solo cuando el resultado es FALLO
+          example: HTTP 503 del banco
+
+    Error:
+      type: object
+      required: [codigo, mensaje]
+      properties:
+        codigo:
+          type: string
+          example: COLA_NO_DISPONIBLE
+        mensaje:
+          type: string
