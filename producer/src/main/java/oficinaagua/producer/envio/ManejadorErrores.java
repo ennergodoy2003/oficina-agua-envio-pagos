@@ -1,5 +1,6 @@
 package oficinaagua.producer.envio;
 
+import oficinaagua.producer.historial.PagoNoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,5 +27,11 @@ public class ManejadorErrores {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErrorResponse("COLA_NO_DISPONIBLE",
                         "RabbitMQ no responde. Los pagos siguen pendientes."));
+    }
+
+    @ExceptionHandler(PagoNoEncontradoException.class)
+    public ResponseEntity<ErrorResponse> pagoNoEncontrado(PagoNoEncontradoException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("PAGO_NO_ENCONTRADO", e.getMessage()));
     }
 }

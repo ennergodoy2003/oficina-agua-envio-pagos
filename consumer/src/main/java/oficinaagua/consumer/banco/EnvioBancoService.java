@@ -25,20 +25,25 @@ public class EnvioBancoService {
     }
 
     public ResultadoEnvio enviar(MensajePago mensaje) {
+        // HU-46: un solo numero de seguimiento para la llamada al banco y para el registro
+        String correlationId = correlationIdDe(mensaje);
+
         String llave;
         BankPaymentRequest solicitud;
         try {
             llave = mapper.llaveIdempotencia(mensaje);
             solicitud = mapper.aSolicitud(mensaje);
         } catch (IllegalArgumentException e) {
-            return ResultadoEnvio.fallo(mensaje.numeroDocumento(), null, "MENSAJE_INVALIDO", e.getMessage(), false);
+            return ResultadoEnvio.fallo(mensaje.numeroDocumento(), null, "MENSAJE_INVALIDO",
+                    e.getMessage(), false, correlationId); // HU-46
         }
 
         try {
-            BankPaymentReceipt recibo = banco.enviarPago(llave, correlationIdDe(mensaje), solicitud);
-            return ResultadoEnvio.exito(llave, 201, recibo.receiptId(), "Entregado al banco");
+            BankPaymentReceipt recibo = banco.enviarPago(llave, correlationId, solicitud);
+            return ResultadoEnvio.exito(llave, 201, recibo.receiptId(), "Entregado al banco",
+                    correlationId); // HU-46
         } catch (FeignException e) {
-            return desdeError(llave, e);
+            return desdeError(llave, correlationId, e); // HU-46
         }
     }
 
@@ -48,7 +53,7 @@ public class EnvioBancoService {
         return (id == null || id.isBlank()) ? UUID.randomUUID().toString() : id.trim();
     }
 
-    private ResultadoEnvio desdeError(String llave, FeignException e) {
+    private ResultadoEnvio desdeError(String llave, String correlationId, FeignException e) { // HU-46
         int status = e.status();
         BankError error = leerError(e);
         String codigo = error != null ? error.code() : null;
@@ -56,7 +61,8 @@ public class EnvioBancoService {
         // Duplicado: el banco ya tiene este pago, se trata como entregado
         if (status == 409 && "DUPLICATE_PAYMENT".equals(codigo)) {
             String recibo = error.originalReceipt() != null ? error.originalReceipt().receiptId() : null;
-            return ResultadoEnvio.exito(llave, 409, recibo, "El banco ya tenia este pago: se trata como entregado");
+            return ResultadoEnvio.exito(llave, 409, recibo,
+                    "El banco ya tenia este pago: se trata como entregado", correlationId); // HU-46
         }
 
         // status <= 0: no hubo respuesta (timeout o conexion), puede reintentarse
@@ -65,7 +71,8 @@ public class EnvioBancoService {
         String detalle = sinRespuesta
                 ? "Sin respuesta del banco (timeout o conexion)"
                 : "El banco respondio " + status + (codigo != null ? " " + codigo : "");
-        return ResultadoEnvio.fallo(llave, sinRespuesta ? null : status, codigo, detalle, reintentable);
+        return ResultadoEnvio.fallo(llave, sinRespuesta ? null : status, codigo, detalle,
+                reintentable, correlationId); // HU-46
     }
 
     private BankError leerError(FeignException e) {

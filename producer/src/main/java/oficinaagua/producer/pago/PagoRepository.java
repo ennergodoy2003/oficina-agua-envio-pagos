@@ -14,4 +14,7 @@ public interface PagoRepository extends Repository<Pago, Long> {
             order by p.id
             """)
     List<Pago> buscarPendientes(@Param("estado") EstadoEnvio estado, Pageable pageable);
+    /** HU-46: para el 404 del historial. La vista tiene todos los pagos, no solo los pendientes. */
+    boolean existsByNumeroDocumento(String numeroDocumento);
 }
+
