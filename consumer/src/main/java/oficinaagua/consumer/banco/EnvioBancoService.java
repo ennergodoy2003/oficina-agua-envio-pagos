@@ -76,7 +76,7 @@ public class EnvioBancoService {
     }
 
     private BankError leerError(FeignException e) {
-        String cuerpo = e.contentUTF8();
+        String cuerpo = cuerpoDe(e);
         if (cuerpo == null || cuerpo.isBlank()) {
             return null;
         }
@@ -86,4 +86,13 @@ public class EnvioBancoService {
             return null;
         }
     }
-}
+
+    /** Con Retry-After, Feign lanza RetryableException y el body queda en la causa. */
+    private static String cuerpoDe(FeignException e) {
+        String cuerpo = e.contentUTF8();
+        if ((cuerpo == null || cuerpo.isBlank()) && e.getCause() instanceof FeignException causa) {
+            cuerpo = causa.contentUTF8();
+        }
+        return cuerpo;
+    }
+    }

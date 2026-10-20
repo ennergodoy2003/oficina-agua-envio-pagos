@@ -98,7 +98,16 @@ services:
     volumes:
       - ./wiremock/banco/mappings:/home/wiremock/mappings:ro
     command: ["--global-response-templating", "--verbose"]
-
+  # ERP falso para pruebas locales. Responde segun wiremock/erp/mappings.
+  # No es el simulador del ingeniero: ese se usa en HU-61.
+  erp-falso:
+    image: wiremock/wiremock:3.9.2
+    restart: unless-stopped
+    ports:
+      - "${ERP_FALSO_PORT:-8090}:8080"
+    volumes:
+      - ./wiremock/erp/mappings:/home/wiremock/mappings:ro
+    command: ["--global-response-templating", "--verbose"]
 volumes:
   rabbitmq_data:
   dynamodb_data:
