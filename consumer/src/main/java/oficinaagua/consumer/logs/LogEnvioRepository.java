@@ -59,6 +59,20 @@ public class LogEnvioRepository {
                 .toList();
     }
 
+    /** HU-47: ¿este pago ya tiene un intento EXITOSO en este destino? */
+    public boolean yaEntregado(String numeroDocumento, Destino destino) {
+        QueryRequest consulta = QueryRequest.builder()
+                .tableName(tabla)
+                .keyConditionExpression("numeroDocumento = :doc AND begins_with(claveIntento, :prefijo)")
+                .filterExpression("resultado = :exitoso")
+                .expressionAttributeValues(Map.of(
+                        ":doc", AttributeValue.fromS(numeroDocumento),
+                        ":prefijo", AttributeValue.fromS(destino.name() + "#"),
+                        ":exitoso", AttributeValue.fromS(RegistroIntento.EXITOSO)))
+                .build();
+        return dynamo.query(consulta).count() > 0;
+    }
+
     private static void ponerTexto(Map<String, AttributeValue> item, String nombre, String valor) {
         if (valor != null && !valor.isBlank()) {
             item.put(nombre, AttributeValue.fromS(valor));

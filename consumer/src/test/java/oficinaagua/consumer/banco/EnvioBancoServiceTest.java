@@ -10,7 +10,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
-
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import java.time.LocalDateTime;
 import oficinaagua.consumer.pago.Destino;
@@ -239,6 +239,33 @@ class EnvioBancoServiceTest {
         assertThat(resultado.reintentable()).isTrue();
         assertThat(resultado.httpStatus()).isEqualTo(503);
         assertThat(resultado.codigoError()).isEqualTo("SERVICE_UNAVAILABLE");
+    }
+    @Test
+    void lostAck_laReentregaRecibe409_yNoHaySegundoRegistro() {
+        String duplicado = "{\"status\":409,\"code\":\"DUPLICATE_PAYMENT\",\"message\":\"duplicado\","
+                + "\"retryable\":false,\"originalReceipt\":" + RECIBO + "}";
+        // 1er envio: el banco registra pero la respuesta llega tarde (se pierde el ack)
+        wireMock.stubFor(post(urlEqualTo(RUTA)).inScenario("LOST_ACK")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(json(201, RECIBO).withFixedDelay(4500))
+                .willSetStateTo("REGISTRADO"));
+        // Reentrega: el banco ya lo tiene
+        wireMock.stubFor(post(urlEqualTo(RUTA)).inScenario("LOST_ACK")
+                .whenScenarioStateIs("REGISTRADO")
+                .willReturn(json(409, duplicado)));
+
+        ResultadoEnvio primero = servicio.enviar(mensaje("efectivo"));
+        assertThat(primero.exitoso()).isFalse();
+        assertThat(primero.reintentable()).isTrue();
+
+        ResultadoEnvio reentrega = servicio.enviar(mensaje("efectivo"));
+        assertThat(reentrega.exitoso()).isTrue();
+        assertThat(reentrega.httpStatus()).isEqualTo(409);
+        assertThat(reentrega.receiptId()).isEqualTo("BNK-20261019-ABC123");
+
+        // Las dos peticiones con la MISMA llave: por eso el banco detecta el duplicado
+        wireMock.verify(2, postRequestedFor(urlEqualTo(RUTA))
+                .withHeader("Idempotency-Key", equalTo("EQA-000001")));
     }
 
 }

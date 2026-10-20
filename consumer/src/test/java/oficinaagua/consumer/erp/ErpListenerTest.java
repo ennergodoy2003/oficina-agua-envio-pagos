@@ -8,7 +8,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.never;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import oficinaagua.consumer.logs.LogEnvioRepository;
@@ -107,5 +107,27 @@ class ErpListenerTest {
     private static MensajePago mensaje() {
         return new MensajePago("EQA-000001", Destino.ERP, "CLI-0001", "Ana Lopez", "MTR-00001",
                 2026, 9, 15075, 15075, 0, null, LocalDateTime.of(2026, 10, 19, 10, 30), "efectivo", null);
+    }
+
+    @Test
+    void pagoYaEntregado_noSeReenvia_yHaceAck() {
+        when(logs.yaEntregado("EQA-000001", Destino.ERP)).thenReturn(true);
+
+        assertThatCode(() -> listener.recibir(mensaje())).doesNotThrowAnyException();
+
+        verify(servicio, never()).enviar(any());
+        verify(logs, never()).guardar(any());
+    }
+
+    @Test
+    void siNoSePuedeRevisarDynamo_seEnviaIgual() {
+        when(logs.yaEntregado(any(), any()))
+                .thenThrow(DynamoDbException.builder().message("DynamoDB caido").build());
+        when(servicio.enviar(any())).thenReturn(
+                ResultadoEnvioErp.exito("EQA-000001", 201, COMPROBANTE, "Contabilizado en el ERP", "corr-5"));
+
+        assertThatCode(() -> listener.recibir(mensaje())).doesNotThrowAnyException();
+
+        verify(servicio).enviar(any());
     }
 }

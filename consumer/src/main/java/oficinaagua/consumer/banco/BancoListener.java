@@ -26,6 +26,11 @@ public class BancoListener {
 
     @RabbitListener(queues = "pagos.banco")
     public void recibir(MensajePago mensaje) {
+        if (yaEntregado(mensaje.numeroDocumento())) {
+            log.info("Pago {} ya estaba entregado al banco: no se vuelve a enviar", mensaje.numeroDocumento());
+            return; // ack: se descarta el mensaje repetido (HU-47)
+        }
+
         ResultadoEnvio resultado = servicio.enviar(mensaje);
         anotar(resultado); // HU-46: una linea por intento, salga bien o mal
 
@@ -54,6 +59,16 @@ public class BancoListener {
         } catch (RuntimeException e) {
             log.error("No se pudo anotar en DynamoDB el intento del pago {}: {}",
                     r.numeroDocumento(), e.getMessage());
+        }
+    }
+
+    /** HU-47: si DynamoDB no responde, se envia igual; la llave estable evita el duplicado. */
+    private boolean yaEntregado(String numeroDocumento) {
+        try {
+            return logs.yaEntregado(numeroDocumento, Destino.BANCO);
+        } catch (RuntimeException e) {
+            log.warn("No se pudo revisar en DynamoDB el pago {}: se envia igual", numeroDocumento);
+            return false;
         }
     }
 }

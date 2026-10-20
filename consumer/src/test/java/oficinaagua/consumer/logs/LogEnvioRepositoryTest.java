@@ -141,6 +141,30 @@ class LogEnvioRepositoryTest {
         }
     }
 
+    @Test
+    void yaEntregado_sinIntentos_esFalso() {
+        assertThat(repo.yaEntregado(docNuevo(), Destino.BANCO)).isFalse();
+    }
+
+    @Test
+    void yaEntregado_soloConFallos_esFalso() {
+        String doc = docNuevo();
+        repo.guardar(RegistroIntento.nuevo(doc, Destino.BANCO, false, 503, "SERVICE_UNAVAILABLE",
+                "El banco respondio 503", "corr-1", null, null, null));
+
+        assertThat(repo.yaEntregado(doc, Destino.BANCO)).isFalse();
+    }
+
+    @Test
+    void yaEntregado_distingueElDestino() {
+        String doc = docNuevo();
+        repo.guardar(RegistroIntento.nuevo(doc, Destino.BANCO, true, 201, null,
+                "Entregado al banco", "corr-2", "BNK-1", null, null));
+
+        assertThat(repo.yaEntregado(doc, Destino.BANCO)).isTrue();
+        assertThat(repo.yaEntregado(doc, Destino.ERP)).isFalse();
+    }
+
     private String docNuevo() {
         String doc = "TEST-" + UUID.randomUUID().toString().substring(0, 8);
         creados.add(doc);
