@@ -50,6 +50,30 @@ class MensajePagoTest {
         assertThat(MensajePago.pendientesDe(pago)).isEmpty();
     }
 
+    @Test
+    void cadaMensajeLlevaSuPropioCorrelationId() {
+        Pago pago = pago("EQA-000001", EstadoEnvio.PENDIENTE, EstadoEnvio.PENDIENTE);
+
+        List<MensajePago> mensajes = MensajePago.pendientesDe(pago);
+
+        assertThat(mensajes).extracting(MensajePago::correlationId)
+                .allSatisfy(id -> assertThat(id).matches("[0-9a-f-]{36}"))
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void laLlaveSeMantieneYElCorrelationIdCambiaEnCadaPublicacion() {
+        Pago pago = pago("EQA-000001", EstadoEnvio.PENDIENTE, EstadoEnvio.ENVIADO);
+
+        MensajePago primero = MensajePago.pendientesDe(pago).get(0);
+        MensajePago segundo = MensajePago.pendientesDe(pago).get(0);
+
+        // llave estable: la misma carta siempre lleva la misma direccion
+        assertThat(segundo.numeroDocumento()).isEqualTo(primero.numeroDocumento());
+        // seguimiento: cada viaje tiene su propio numero
+        assertThat(segundo.correlationId()).isNotEqualTo(primero.correlationId());
+    }
+
     private Pago pago(String numero, EstadoEnvio banco, EstadoEnvio erp) {
         Pago pago = new Pago();
         ReflectionTestUtils.setField(pago, "numeroDocumento", numero);
