@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 /** Prueba contra un ERP falso (WireMock). No toca RabbitMQ, el contenedor erp-falso ni el simulador del docente. */
 @SpringBootTest(properties = {
         "spring.rabbitmq.username=test",
@@ -216,6 +216,34 @@ class EnvioErpServiceTest {
         assertThat(resultado.reintentable()).isTrue();
         assertThat(resultado.httpStatus()).isEqualTo(503);
         assertThat(resultado.codigoError()).isEqualTo("SERVICIO_NO_DISPONIBLE");
+    }
+    @Test
+    void lostAck_laReentregaRecibe409_yNoHaySegundoRegistro() {
+        String duplicado = "{\"estado_http\":409,\"codigo_error\":\"DOCUMENTO_DUPLICADO\","
+                + "\"mensaje\":\"ya fue contabilizado\",\"reintentable\":false,"
+                + "\"fecha_hora\":\"2026-10-20T18:00:05Z\",\"comprobante_original\":" + COMPROBANTE + "}";
+        // 1er envio: el ERP registra pero la respuesta llega tarde (se pierde el ack)
+        wireMock.stubFor(post(urlEqualTo(RUTA)).inScenario("LOST_ACK")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(json(201, COMPROBANTE).withFixedDelay(4500))
+                .willSetStateTo("REGISTRADO"));
+        // Reentrega: el ERP ya lo tiene
+        wireMock.stubFor(post(urlEqualTo(RUTA)).inScenario("LOST_ACK")
+                .whenScenarioStateIs("REGISTRADO")
+                .willReturn(json(409, duplicado)));
+
+        ResultadoEnvioErp primero = servicio.enviar(mensaje("efectivo", null));
+        assertThat(primero.exitoso()).isFalse();
+        assertThat(primero.reintentable()).isTrue();
+
+        ResultadoEnvioErp reentrega = servicio.enviar(mensaje("efectivo", null));
+        assertThat(reentrega.exitoso()).isTrue();
+        assertThat(reentrega.httpStatus()).isEqualTo(409);
+        assertThat(reentrega.numeroComprobante()).isEqualTo("ERP-20261020-Q7W2ZX");
+
+        // Las dos peticiones con el MISMO documento: por eso el ERP detecta el duplicado
+        wireMock.verify(2, postRequestedFor(urlEqualTo(RUTA))
+                .withRequestBody(matchingJsonPath("$.documento_origen.numero", equalTo("EQA-000001"))));
     }
 
 
