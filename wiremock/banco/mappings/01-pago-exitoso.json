@@ -1,0 +1,12 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/bank/v1/payments"
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"receiptId\":\"BNK-{{request.headers.Idempotency-Key}}\",\"idempotencyKey\":\"{{request.headers.Idempotency-Key}}\",\"teamCode\":\"EQUIPO_A\",\"status\":\"ACCEPTED\",\"amount\":{\"valueInCents\":15075,\"currency\":\"GTQ\"},\"receivedAt\":\"2026-10-20T17:00:00Z\",\"valueDate\":\"2026-10-21\"}"
+  }
+}
