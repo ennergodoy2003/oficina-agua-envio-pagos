@@ -1,0 +1,12 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/erp/v1/pagos"
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"numero_comprobante\":\"ERP-20261020-{{randomValue length=6 type='ALPHANUMERIC' uppercase=true}}\",\"numero_documento_origen\":\"{{jsonPath request.body '$.documento_origen.numero'}}\",\"equipo\":\"EQUIPO_A\",\"estado\":\"CONTABILIZADO\",\"total\":\"{{jsonPath request.body '$.total'}}\",\"fecha_registro\":\"2026-10-20T18:00:00Z\",\"periodo_contable\":{\"anio\":2026,\"mes\":10},\"numero_partida\":\"PDA-2026-{{randomValue length=6 type='NUMERIC'}}\"}"
+  }
+}

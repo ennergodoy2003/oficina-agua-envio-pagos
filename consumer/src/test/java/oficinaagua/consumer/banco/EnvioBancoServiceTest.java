@@ -227,4 +227,18 @@ class EnvioBancoServiceTest {
                 2026, 9, 15075, 15075, 0, null, LocalDateTime.of(2026, 10, 19, 10, 30), formaPago,
                 correlationId);
     }
+    @Test
+    void error503_conRetryAfter_conservaElCodigoDeError() {
+        // Con Retry-After, Feign lanza RetryableException y el body queda en la causa
+        String cuerpo = "{\"status\":503,\"code\":\"SERVICE_UNAVAILABLE\",\"message\":\"caido\",\"retryable\":true}";
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(503, cuerpo).withHeader("Retry-After", "5")));
+
+        ResultadoEnvio resultado = servicio.enviar(mensaje("efectivo"));
+
+        assertThat(resultado.exitoso()).isFalse();
+        assertThat(resultado.reintentable()).isTrue();
+        assertThat(resultado.httpStatus()).isEqualTo(503);
+        assertThat(resultado.codigoError()).isEqualTo("SERVICE_UNAVAILABLE");
+    }
+
 }

@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/erp/v1/pagos",
+    "bodyPatterns": [
+      { "matchesJsonPath": { "expression": "$.documento_origen.numero", "equalTo": "EQA-000004" } }
+    ]
+  },
+  "response": {
+    "status": 503,
+    "headers": { "Content-Type": "application/json", "Retry-After": "5" },
+    "jsonBody": {
+      "estado_http": 503,
+      "codigo_error": "SERVICIO_NO_DISPONIBLE",
+      "mensaje": "ERP falso: documento de prueba que siempre falla",
+      "reintentable": true,
+      "fecha_hora": "2026-10-20T18:00:00Z"
+    }
+  }
+}
