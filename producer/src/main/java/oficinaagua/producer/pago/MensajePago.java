@@ -3,8 +3,13 @@ package oficinaagua.producer.pago;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-/** Sobre que viaja por RabbitMQ: lleva todo lo que el consumer necesita para armar la llamada. */
+/**
+ * Sobre que viaja por RabbitMQ: lleva todo lo que el consumer necesita para armar la llamada.
+ * numeroDocumento es la llave estable del pago: la misma en cada reintento.
+ * correlationId es el numero de seguimiento de ESTE envio: nuevo por cada mensaje publicado.
+ */
 public record MensajePago(
         String numeroDocumento,
         Destino destino,
@@ -18,7 +23,8 @@ public record MensajePago(
         long adicionalCentavos,
         String conceptoAdicional,
         LocalDateTime fechaPago,
-        String formaPago) {
+        String formaPago,
+        String correlationId) {
 
     /** Un mensaje por cada destino en el que el pago sigue pendiente. */
     public static List<MensajePago> pendientesDe(Pago pago) {
@@ -46,6 +52,7 @@ public record MensajePago(
                 pago.getAdicionalCentavos(),
                 pago.getConceptoAdicional(),
                 pago.getFechaPago(),
-                pago.getFormaPago());
+                pago.getFormaPago(),
+                UUID.randomUUID().toString());
     }
 }
