@@ -239,6 +239,7 @@ class EnvioBancoServiceTest {
         assertThat(resultado.reintentable()).isTrue();
         assertThat(resultado.httpStatus()).isEqualTo(503);
         assertThat(resultado.codigoError()).isEqualTo("SERVICE_UNAVAILABLE");
+        assertThat(resultado.retryAfterSegundos()).isEqualTo(5L);
     }
     @Test
     void lostAck_laReentregaRecibe409_yNoHaySegundoRegistro() {

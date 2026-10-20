@@ -1,0 +1,7 @@
+{
+  "scenarioName": "erp-caido",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "Recuperado",
+  "request": { "method": "POST", "url": "/simular/recuperar" },
+  "response": { "status": 200, "body": "ERP falso recuperado" }
+}

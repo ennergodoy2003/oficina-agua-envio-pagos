@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import java.util.Set;
 import java.util.UUID;
+import oficinaagua.consumer.comun.FeignErrores;
 import oficinaagua.consumer.pago.MensajePago;
 import org.springframework.stereotype.Service;
 
@@ -70,13 +71,12 @@ public class EnvioErpService {
                 ? "Sin respuesta del ERP (timeout o conexion)"
                 : "El ERP respondio " + status + (codigo != null ? " " + codigo : "");
         return ResultadoEnvioErp.fallo(numero, sinRespuesta ? null : status, codigo, detalle,
-                reintentable, correlationId);
+                reintentable, correlationId, FeignErrores.retryAfterSegundos(e));
     }
 
     /** API Gateway a veces responde {"message":"Forbidden"}: sin formato ErpError, codigo queda null. */
-    /** API Gateway a veces responde {"message":"Forbidden"}: sin formato ErpError, codigo queda null. */
     private ErpError leerError(FeignException e) {
-        String cuerpo = cuerpoDe(e);
+        String cuerpo = FeignErrores.cuerpo(e);
         if (cuerpo == null || cuerpo.isBlank()) {
             return null;
         }
@@ -86,13 +86,4 @@ public class EnvioErpService {
             return null;
         }
     }
-
-    /** Con Retry-After, Feign lanza RetryableException y el body queda en la causa. */
-    private static String cuerpoDe(FeignException e) {
-        String cuerpo = e.contentUTF8();
-        if ((cuerpo == null || cuerpo.isBlank()) && e.getCause() instanceof FeignException causa) {
-            cuerpo = causa.contentUTF8();
-        }
-        return cuerpo;
-    }
-    }
+}

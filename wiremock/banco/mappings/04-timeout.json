@@ -1,0 +1,16 @@
+{
+  "priority": 1,
+  "scenarioName": "banco-caido",
+  "requiredScenarioState": "Started",
+  "request": {
+    "method": "POST",
+    "url": "/bank/v1/payments",
+    "headers": { "Idempotency-Key": { "equalTo": "EQA-000006" } }
+  },
+  "response": {
+    "status": 201,
+    "fixedDelayMilliseconds": 4500,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"receiptId\":\"BNK-{{request.headers.Idempotency-Key}}\",\"status\":\"ACCEPTED\"}"
+  }
+}

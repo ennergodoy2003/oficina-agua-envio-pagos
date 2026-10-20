@@ -1,8 +1,8 @@
 package oficinaagua.consumer.banco;
-
+import oficinaagua.consumer.reintentos.ResultadoIntento;
 /**
  * Resultado de un intento de envio al banco. El listener lo anota en DynamoDB (HU-46).
- * correlationId: el mismo numero de seguimiento que se mando al banco en X-Correlation-Id.
+ * retryAfterSegundos: lo que pidio el banco en Retry-After (HU-48), o null.
  */
 public record ResultadoEnvio(
         String numeroDocumento,
@@ -12,17 +12,24 @@ public record ResultadoEnvio(
         String codigoError,
         String detalle,
         boolean reintentable,
-        String correlationId) {
+        String correlationId,
+        Long retryAfterSegundos) implements ResultadoIntento {
 
     public static ResultadoEnvio exito(String numeroDocumento, int httpStatus, String receiptId,
                                        String detalle, String correlationId) {
         return new ResultadoEnvio(numeroDocumento, true, httpStatus, receiptId, null, detalle, false,
-                correlationId);
+                correlationId, null);
     }
 
     public static ResultadoEnvio fallo(String numeroDocumento, Integer httpStatus, String codigoError,
                                        String detalle, boolean reintentable, String correlationId) {
+        return fallo(numeroDocumento, httpStatus, codigoError, detalle, reintentable, correlationId, null);
+    }
+
+    public static ResultadoEnvio fallo(String numeroDocumento, Integer httpStatus, String codigoError,
+                                       String detalle, boolean reintentable, String correlationId,
+                                       Long retryAfterSegundos) {
         return new ResultadoEnvio(numeroDocumento, false, httpStatus, null, codigoError, detalle,
-                reintentable, correlationId);
+                reintentable, correlationId, retryAfterSegundos);
     }
 }
