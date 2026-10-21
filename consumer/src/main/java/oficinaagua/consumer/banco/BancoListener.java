@@ -4,13 +4,16 @@ import oficinaagua.consumer.logs.LogEnvioRepository;
 import oficinaagua.consumer.logs.RegistroIntento;
 import oficinaagua.consumer.pago.Destino;
 import oficinaagua.consumer.pago.MensajePago;
+import oficinaagua.consumer.reintentos.DeadLetterPublicador;
+import oficinaagua.consumer.reintentos.Reintentador;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-/** El cartero del banco: toma una carta de pagos.banco, la entrega y anota el intento. */
+/** El cartero del banco: toma una carta de pagos.banco, la entrega (con reintentos) y anota cada intento. */
 @Component
 public class BancoListener {
 
@@ -18,10 +21,15 @@ public class BancoListener {
 
     private final EnvioBancoService servicio;
     private final LogEnvioRepository logs;
+    private final Reintentador reintentador;
+    private final DeadLetterPublicador deadLetter;
 
-    public BancoListener(EnvioBancoService servicio, LogEnvioRepository logs) {
+    public BancoListener(EnvioBancoService servicio, LogEnvioRepository logs,
+                         Reintentador reintentador, DeadLetterPublicador deadLetter) {
         this.servicio = servicio;
         this.logs = logs;
+        this.reintentador = reintentador;
+        this.deadLetter = deadLetter;
     }
 
     @RabbitListener(queues = "pagos.banco")
@@ -31,26 +39,32 @@ public class BancoListener {
             return; // ack: se descarta el mensaje repetido (HU-47)
         }
 
-        ResultadoEnvio resultado = servicio.enviar(mensaje);
-        anotar(resultado); // HU-46: una linea por intento, salga bien o mal
+        // HU-48: reintenta con backoff; anotar se llama en cada intento (HU-46)
+        Reintentador.Desenlace<ResultadoEnvio> desenlace =
+                reintentador.ejecutar(() -> servicio.enviar(mensaje), this::anotar);
+        ResultadoEnvio resultado = desenlace.resultado();
 
         if (resultado.exitoso()) {
             log.info("Pago {} entregado al banco: {} (comprobante {})",
                     resultado.numeroDocumento(), resultado.detalle(), resultado.receiptId());
-            return; // termina sin excepcion: Spring hace ack
+            return; // ack
         }
 
-        log.warn("Pago {} NO entregado al banco: {} (reintentable: {})",
-                resultado.numeroDocumento(), resultado.detalle(), resultado.reintentable());
-        // sin ack y sin reencolar: el mensaje va a pagos.dlx -> pagos.dlq
-        throw new AmqpRejectAndDontRequeueException(resultado.detalle());
+        log.warn("Pago {} NO entregado al banco tras {} intento(s): {}",
+                resultado.numeroDocumento(), desenlace.intentos(), resultado.detalle());
+        aDeadLetter(mensaje, resultado, desenlace.intentos());
     }
 
-    /**
-     * Si DynamoDB falla, se avisa en el log pero NO cambia la decision del envio.
-     * Si un exito no quedo anotado, la Lambda no marca el pago, el producer lo republica
-     * y el banco responde 409 DUPLICATE_PAYMENT: ese intento si se anota.
-     */
+    /** HU-48: a la DLQ con el motivo. Si no se puede publicar, se rechaza y RabbitMQ lo manda igual (sin motivo). */
+    private void aDeadLetter(MensajePago mensaje, ResultadoEnvio r, int intentos) {
+        try {
+            deadLetter.enviar(mensaje, Destino.BANCO, r.detalle(), r.codigoError(), r.httpStatus(), intentos);
+        } catch (AmqpException e) {
+            throw new AmqpRejectAndDontRequeueException(r.detalle(), e);
+        }
+    }
+
+    /** Si DynamoDB falla, se avisa en el log pero NO cambia la decision del envio. */
     private void anotar(ResultadoEnvio r) {
         try {
             logs.guardar(RegistroIntento.nuevo(r.numeroDocumento(), Destino.BANCO, r.exitoso(),

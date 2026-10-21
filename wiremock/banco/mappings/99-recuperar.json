@@ -1,0 +1,7 @@
+{
+  "scenarioName": "banco-caido",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "Recuperado",
+  "request": { "method": "POST", "url": "/simular/recuperar" },
+  "response": { "status": 200, "body": "Banco falso recuperado" }
+}

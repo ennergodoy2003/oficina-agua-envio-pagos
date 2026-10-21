@@ -1,11 +1,11 @@
 {
   "priority": 1,
+  "scenarioName": "banco-caido",
+  "requiredScenarioState": "Started",
   "request": {
     "method": "POST",
     "url": "/bank/v1/payments",
-    "headers": {
-      "Idempotency-Key": { "equalTo": "EQA-000003" }
-    }
+    "headers": { "Idempotency-Key": { "equalTo": "EQA-000003" } }
   },
   "response": {
     "status": 503,
@@ -13,7 +13,7 @@
     "jsonBody": {
       "status": 503,
       "code": "SERVICE_UNAVAILABLE",
-      "message": "Banco falso: pago de prueba que siempre falla",
+      "message": "Banco falso: ERROR_503",
       "retryable": true
     }
   }

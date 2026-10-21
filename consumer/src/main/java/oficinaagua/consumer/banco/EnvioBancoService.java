@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import java.util.Set;
 import java.util.UUID;
+import oficinaagua.consumer.comun.FeignErrores;
 import oficinaagua.consumer.pago.MensajePago;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class EnvioBancoService {
     }
 
     public ResultadoEnvio enviar(MensajePago mensaje) {
-        // HU-46: un solo numero de seguimiento para la llamada al banco y para el registro
+        // Un solo numero de seguimiento para la llamada al banco y para el registro (HU-46)
         String correlationId = correlationIdDe(mensaje);
 
         String llave;
@@ -35,15 +36,14 @@ public class EnvioBancoService {
             solicitud = mapper.aSolicitud(mensaje);
         } catch (IllegalArgumentException e) {
             return ResultadoEnvio.fallo(mensaje.numeroDocumento(), null, "MENSAJE_INVALIDO",
-                    e.getMessage(), false, correlationId); // HU-46
+                    e.getMessage(), false, correlationId);
         }
 
         try {
             BankPaymentReceipt recibo = banco.enviarPago(llave, correlationId, solicitud);
-            return ResultadoEnvio.exito(llave, 201, recibo.receiptId(), "Entregado al banco",
-                    correlationId); // HU-46
+            return ResultadoEnvio.exito(llave, 201, recibo.receiptId(), "Entregado al banco", correlationId);
         } catch (FeignException e) {
-            return desdeError(llave, correlationId, e); // HU-46
+            return desdeError(llave, correlationId, e);
         }
     }
 
@@ -53,7 +53,7 @@ public class EnvioBancoService {
         return (id == null || id.isBlank()) ? UUID.randomUUID().toString() : id.trim();
     }
 
-    private ResultadoEnvio desdeError(String llave, String correlationId, FeignException e) { // HU-46
+    private ResultadoEnvio desdeError(String llave, String correlationId, FeignException e) {
         int status = e.status();
         BankError error = leerError(e);
         String codigo = error != null ? error.code() : null;
@@ -62,7 +62,7 @@ public class EnvioBancoService {
         if (status == 409 && "DUPLICATE_PAYMENT".equals(codigo)) {
             String recibo = error.originalReceipt() != null ? error.originalReceipt().receiptId() : null;
             return ResultadoEnvio.exito(llave, 409, recibo,
-                    "El banco ya tenia este pago: se trata como entregado", correlationId); // HU-46
+                    "El banco ya tenia este pago: se trata como entregado", correlationId);
         }
 
         // status <= 0: no hubo respuesta (timeout o conexion), puede reintentarse
@@ -72,11 +72,11 @@ public class EnvioBancoService {
                 ? "Sin respuesta del banco (timeout o conexion)"
                 : "El banco respondio " + status + (codigo != null ? " " + codigo : "");
         return ResultadoEnvio.fallo(llave, sinRespuesta ? null : status, codigo, detalle,
-                reintentable, correlationId); // HU-46
+                reintentable, correlationId, FeignErrores.retryAfterSegundos(e));
     }
 
     private BankError leerError(FeignException e) {
-        String cuerpo = cuerpoDe(e);
+        String cuerpo = FeignErrores.cuerpo(e);
         if (cuerpo == null || cuerpo.isBlank()) {
             return null;
         }
@@ -86,13 +86,4 @@ public class EnvioBancoService {
             return null;
         }
     }
-
-    /** Con Retry-After, Feign lanza RetryableException y el body queda en la causa. */
-    private static String cuerpoDe(FeignException e) {
-        String cuerpo = e.contentUTF8();
-        if ((cuerpo == null || cuerpo.isBlank()) && e.getCause() instanceof FeignException causa) {
-            cuerpo = causa.contentUTF8();
-        }
-        return cuerpo;
-    }
-    }
+}

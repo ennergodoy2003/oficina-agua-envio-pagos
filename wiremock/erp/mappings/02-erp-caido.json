@@ -1,5 +1,7 @@
 {
   "priority": 1,
+  "scenarioName": "erp-caido",
+  "requiredScenarioState": "Started",
   "request": {
     "method": "POST",
     "url": "/erp/v1/pagos",
@@ -13,7 +15,7 @@
     "jsonBody": {
       "estado_http": 503,
       "codigo_error": "SERVICIO_NO_DISPONIBLE",
-      "mensaje": "ERP falso: documento de prueba que siempre falla",
+      "mensaje": "ERP falso: documento de prueba que falla",
       "reintentable": true,
       "fecha_hora": "2026-10-20T18:00:00Z"
     }

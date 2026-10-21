@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "scenarioName": "falla-una-vez",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "Recuperado",
+  "request": {
+    "method": "POST",
+    "url": "/bank/v1/payments",
+    "headers": { "Idempotency-Key": { "equalTo": "EQA-000007" } }
+  },
+  "response": {
+    "status": 503,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "status": 503,
+      "code": "SERVICE_UNAVAILABLE",
+      "message": "Banco falso: falla solo la primera vez",
+      "retryable": true
+    }
+  }
+}

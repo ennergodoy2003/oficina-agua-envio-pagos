@@ -1,0 +1,20 @@
+{
+  "priority": 1,
+  "scenarioName": "banco-caido",
+  "requiredScenarioState": "Started",
+  "request": {
+    "method": "POST",
+    "url": "/bank/v1/payments",
+    "headers": { "Idempotency-Key": { "equalTo": "EQA-000005" } }
+  },
+  "response": {
+    "status": 429,
+    "headers": { "Content-Type": "application/json", "Retry-After": "2" },
+    "jsonBody": {
+      "status": 429,
+      "code": "RATE_LIMIT",
+      "message": "Banco falso: RATE_LIMIT",
+      "retryable": true
+    }
+  }
+}
