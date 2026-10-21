@@ -106,8 +106,27 @@ services:
     ports:
       - "${ERP_FALSO_PORT:-8090}:8080"
     volumes:
+
       - ./wiremock/erp/mappings:/home/wiremock/mappings:ro
+
     command: ["--global-response-templating", "--verbose"]
+  # Lambda de HU-49 en local: lee el stream de DynamoDB Local y marca pagos_envio en MariaDB.
+  lambda-marcar-flags:
+    build: ./lambda/marcar_flags
+    restart: unless-stopped
+    depends_on:
+      - dynamodb
+    environment:
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      DYNAMODB_TABLE: ${DYNAMODB_TABLE:-pagos-envio-logs}
+      AWS_DEFAULT_REGION: ${DYNAMODB_REGION:-us-east-1}
+      DB_HOST: ${LAMBDA_DB_HOST:-host.docker.internal}
+      DB_PORT: ${PAGOS_DB_PORT:-3306}
+      DB_NAME: ${PAGOS_DB_NAME:?falta PAGOS_DB_NAME en .env}
+      DB_USER: ${LAMBDA_DB_USER:?falta LAMBDA_DB_USER en .env}
+      DB_PASSWORD: ${LAMBDA_DB_PASSWORD:?falta LAMBDA_DB_PASSWORD en .env}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 volumes:
   rabbitmq_data:
   dynamodb_data:
