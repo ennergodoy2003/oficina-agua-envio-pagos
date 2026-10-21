@@ -28,3 +28,7 @@ replay_pid*
 .idea/
 .env
 target/
+
+# Python (Lambda HU-49)
+__pycache__/
+.pytest_cache/
