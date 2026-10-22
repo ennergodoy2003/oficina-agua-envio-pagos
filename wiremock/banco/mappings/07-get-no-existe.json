@@ -1,0 +1,17 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/bank/v1/payments/.+"
+  },
+  "response": {
+    "status": 404,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Banco falso: el pago no existe",
+      "retryable": false
+    }
+  }
+}

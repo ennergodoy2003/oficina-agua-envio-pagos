@@ -22,6 +22,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 /** Prueba contra un ERP falso (WireMock). No toca RabbitMQ, el contenedor erp-falso ni el simulador del docente. */
 @SpringBootTest(properties = {
         "spring.rabbitmq.username=test",
@@ -244,6 +246,59 @@ class EnvioErpServiceTest {
         // Las dos peticiones con el MISMO documento: por eso el ERP detecta el duplicado
         wireMock.verify(2, postRequestedFor(urlEqualTo(RUTA))
                 .withRequestBody(matchingJsonPath("$.documento_origen.numero", equalTo("EQA-000001"))));
+    }
+
+    // ---------- HU-60: reconciliacion con GET ----------
+
+    private static final String RUTA_GET = "/erp/v1/pagos/EQA-000001";
+
+    @Test
+    void lostAck_elGetDice200_seReconcilia_sinSegundoPost() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(201, COMPROBANTE).withFixedDelay(4500)));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(200, COMPROBANTE)));
+
+        ResultadoEnvioErp resultado = servicio.enviar(mensaje("efectivo", null));
+
+        assertThat(resultado.exitoso()).isTrue();
+        assertThat(resultado.httpStatus()).isEqualTo(200);
+        assertThat(resultado.numeroComprobante()).isEqualTo("ERP-20261020-Q7W2ZX");
+        assertThat(resultado.numeroPartida()).isEqualTo("PDA-2026-000873");
+        wireMock.verify(1, postRequestedFor(urlEqualTo(RUTA)));
+        wireMock.verify(1, getRequestedFor(urlEqualTo(RUTA_GET))
+                .withHeader("x-api-key", equalTo("clave-erp-prueba")));
+    }
+
+    @Test
+    void timeout_elGetDice404_sigueSiendoReintentable() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(201, COMPROBANTE).withFixedDelay(4500)));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(404, error(404, "DOCUMENTO_NO_ENCONTRADO", false))));
+
+        ResultadoEnvioErp resultado = servicio.enviar(mensaje("efectivo", null));
+
+        assertThat(resultado.exitoso()).isFalse();
+        assertThat(resultado.reintentable()).isTrue();
+        assertThat(resultado.httpStatus()).isNull();
+        wireMock.verify(1, getRequestedFor(urlEqualTo(RUTA_GET)));
+    }
+
+    @Test
+    void error504_elGetDice200_seReconcilia() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(504, "{\"message\":\"Endpoint request timed out\"}")));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(200, COMPROBANTE)));
+
+        ResultadoEnvioErp resultado = servicio.enviar(mensaje("efectivo", null));
+
+        assertThat(resultado.exitoso()).isTrue();
+        assertThat(resultado.httpStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void error503_noConsultaElGet() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(503, error(503, "SERVICIO_NO_DISPONIBLE", true))));
+
+        servicio.enviar(mensaje("efectivo", null));
+
+        wireMock.verify(0, getRequestedFor(urlEqualTo(RUTA_GET)));
     }
 
 

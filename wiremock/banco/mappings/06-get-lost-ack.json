@@ -1,0 +1,20 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "url": "/bank/v1/payments/EQA-000006"
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "receiptId": "BNK-EQA-000006",
+      "idempotencyKey": "EQA-000006",
+      "teamCode": "EQUIPO_A",
+      "status": "ACCEPTED",
+      "amount": { "valueInCents": 15075, "currency": "GTQ" },
+      "receivedAt": "2026-10-21T18:00:00Z",
+      "valueDate": "2026-10-22"
+    }
+  }
+}
