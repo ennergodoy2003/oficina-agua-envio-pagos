@@ -65,14 +65,38 @@ public class EnvioBancoService {
                     "El banco ya tenia este pago: se trata como entregado", correlationId);
         }
 
-        // status <= 0: no hubo respuesta (timeout o conexion), puede reintentarse
+        // status <= 0: no hubo respuesta (timeout o conexion)
         boolean sinRespuesta = status <= 0;
+
+        // HU-60: con timeout o 504 no sabemos si el banco lo registro: se pregunta antes de reintentar
+        if (sinRespuesta || status == 504) {
+            ResultadoEnvio reconciliado = reconciliar(llave, correlationId);
+            if (reconciliado != null) {
+                return reconciliado;
+            }
+        }
+
         boolean reintentable = sinRespuesta || REINTENTABLES.contains(status);
         String detalle = sinRespuesta
                 ? "Sin respuesta del banco (timeout o conexion)"
                 : "El banco respondio " + status + (codigo != null ? " " + codigo : "");
         return ResultadoEnvio.fallo(llave, sinRespuesta ? null : status, codigo, detalle,
                 reintentable, correlationId, FeignErrores.retryAfterSegundos(e));
+    }
+
+    /**
+     * HU-60: GET del pago. 200 = ya estaba registrado: exito con su comprobante (httpStatus 200).
+     * 404 = no llego; otro error = no se sabe. En esos dos casos devuelve null y se sigue reintentando.
+     */
+    private ResultadoEnvio reconciliar(String llave, String correlationId) {
+        try {
+            BankPaymentReceipt recibo = banco.consultarPago(llave, correlationId);
+            return ResultadoEnvio.exito(llave, 200, recibo.receiptId(),
+                    "Sin respuesta al enviar, pero el banco ya tenia el pago (reconciliado con GET)",
+                    correlationId);
+        } catch (FeignException e) {
+            return null;
+        }
     }
 
     private BankError leerError(FeignException e) {

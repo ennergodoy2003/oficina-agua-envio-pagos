@@ -64,14 +64,38 @@ public class EnvioErpService {
                     "El ERP ya tenia este documento: se trata como entregado", correlationId);
         }
 
-        // status <= 0: no hubo respuesta (timeout o conexion), puede reintentarse
+        // status <= 0: no hubo respuesta (timeout o conexion)
         boolean sinRespuesta = status <= 0;
+
+        // HU-60: con timeout o 504 no sabemos si el ERP lo registro: se pregunta antes de reintentar
+        if (sinRespuesta || status == 504) {
+            ResultadoEnvioErp reconciliado = reconciliar(numero, correlationId);
+            if (reconciliado != null) {
+                return reconciliado;
+            }
+        }
+
         boolean reintentable = sinRespuesta || REINTENTABLES.contains(status);
         String detalle = sinRespuesta
                 ? "Sin respuesta del ERP (timeout o conexion)"
                 : "El ERP respondio " + status + (codigo != null ? " " + codigo : "");
         return ResultadoEnvioErp.fallo(numero, sinRespuesta ? null : status, codigo, detalle,
                 reintentable, correlationId, FeignErrores.retryAfterSegundos(e));
+    }
+
+    /**
+     * HU-60: GET del documento. 200 = ya estaba contabilizado: exito con su comprobante (httpStatus 200).
+     * 404 = no llego; otro error = no se sabe. En esos dos casos devuelve null y se sigue reintentando.
+     */
+    private ResultadoEnvioErp reconciliar(String numero, String correlationId) {
+        try {
+            ErpComprobante comprobante = erp.consultarPago(numero, correlationId);
+            return ResultadoEnvioErp.exito(numero, 200, comprobante,
+                    "Sin respuesta al enviar, pero el ERP ya tenia el documento (reconciliado con GET)",
+                    correlationId);
+        } catch (FeignException e) {
+            return null;
+        }
     }
 
     /** API Gateway a veces responde {"message":"Forbidden"}: sin formato ErpError, codigo queda null. */

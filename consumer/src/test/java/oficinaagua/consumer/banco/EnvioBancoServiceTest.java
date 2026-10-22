@@ -23,7 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 /** Prueba contra un banco falso (WireMock). No toca RabbitMQ, el .env ni el simulador del docente. */
 @SpringBootTest(properties = {
         "spring.rabbitmq.username=test",
@@ -267,6 +268,60 @@ class EnvioBancoServiceTest {
         // Las dos peticiones con la MISMA llave: por eso el banco detecta el duplicado
         wireMock.verify(2, postRequestedFor(urlEqualTo(RUTA))
                 .withHeader("Idempotency-Key", equalTo("EQA-000001")));
+    }
+
+    // ---------- HU-60: reconciliacion con GET ----------
+
+    private static final String RUTA_GET = "/bank/v1/payments/EQA-000001";
+
+    @Test
+    void lostAck_elGetDice200_seReconcilia_sinSegundoPost() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(201, RECIBO).withFixedDelay(4500)));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(200, RECIBO)));
+
+        ResultadoEnvio resultado = servicio.enviar(mensaje("efectivo"));
+
+        assertThat(resultado.exitoso()).isTrue();
+        assertThat(resultado.httpStatus()).isEqualTo(200);
+        assertThat(resultado.receiptId()).isEqualTo("BNK-20261019-ABC123");
+        wireMock.verify(1, postRequestedFor(urlEqualTo(RUTA)));
+        wireMock.verify(1, getRequestedFor(urlEqualTo(RUTA_GET))
+                .withHeader("x-api-key", equalTo("clave-de-prueba")));
+    }
+
+    @Test
+    void timeout_elGetDice404_sigueSiendoReintentable() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(201, RECIBO).withFixedDelay(4500)));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(404,
+                "{\"status\":404,\"code\":\"NOT_FOUND\",\"message\":\"no existe\",\"retryable\":false}")));
+
+        ResultadoEnvio resultado = servicio.enviar(mensaje("efectivo"));
+
+        assertThat(resultado.exitoso()).isFalse();
+        assertThat(resultado.reintentable()).isTrue();
+        assertThat(resultado.httpStatus()).isNull();
+        wireMock.verify(1, getRequestedFor(urlEqualTo(RUTA_GET)));
+    }
+
+    @Test
+    void error504_elGetDice200_seReconcilia() {
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(504, "{\"message\":\"Endpoint request timed out\"}")));
+        wireMock.stubFor(get(urlEqualTo(RUTA_GET)).willReturn(json(200, RECIBO)));
+
+        ResultadoEnvio resultado = servicio.enviar(mensaje("efectivo"));
+
+        assertThat(resultado.exitoso()).isTrue();
+        assertThat(resultado.httpStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void error503_noConsultaElGet() {
+        String cuerpo = "{\"status\":503,\"code\":\"SERVICE_UNAVAILABLE\",\"message\":\"caido\",\"retryable\":true}";
+        wireMock.stubFor(post(urlEqualTo(RUTA)).willReturn(json(503, cuerpo)));
+
+        servicio.enviar(mensaje("efectivo"));
+
+        wireMock.verify(0, getRequestedFor(urlEqualTo(RUTA_GET)));
     }
 
 }
