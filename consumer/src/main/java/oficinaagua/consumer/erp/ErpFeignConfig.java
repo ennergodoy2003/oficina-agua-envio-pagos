@@ -11,4 +11,13 @@ public class ErpFeignConfig {
     public RequestInterceptor erpApiKeyInterceptor(@Value("${erp.api-key}") String apiKey) {
         return template -> template.header("x-api-key", apiKey);
     }
+    /** HU-61: si SIMULACION_ESCENARIO tiene valor, se manda X-Simulation-Scenario; vacio = AUTO. */
+    @Bean
+    public RequestInterceptor erpEscenarioInterceptor(@Value("${simulador.escenario:}") String escenario) {
+        return template -> {
+            if (escenario != null && !escenario.isBlank()) {
+                template.header("X-Simulation-Scenario", escenario.trim());
+            }
+        };
+    }
 }

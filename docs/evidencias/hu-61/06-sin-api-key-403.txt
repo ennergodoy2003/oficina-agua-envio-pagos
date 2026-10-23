@@ -1,0 +1,12 @@
+Llamadas al simulador SIN el header x-api-key
+Fecha: 22/10/2026, 15:16 (hora de Guatemala)
+
+> curl.exe -i https://gdsi5lyj34.execute-api.us-east-1.amazonaws.com/prod/bank/v1/payments/EQA-000001
+HTTP/1.1 403 Forbidden
+{"status":403,"code":"FORBIDDEN","message":"API key ausente o inválida (header x-api-key)","retryable":false,"correlationId":"24226f76-c331-4b48-8e19-711d5d8b717b","timestamp":"2026-10-22T21:16:21Z"}
+
+> curl.exe -i https://gdsi5lyj34.execute-api.us-east-1.amazonaws.com/prod/erp/v1/pagos/EQA-000001
+HTTP/1.1 403 Forbidden
+{"estado_http":403,"codigo_error":"PROHIBIDO","mensaje":"API key ausente o inválida (header x-api-key)","reintentable":false,"id_correlacion":"d29ec79b-cd17-43c4-9c42-580bc45c3f35","fecha_hora":"2026-10-22T21:16:27Z"}
+
+Resultado: sin x-api-key, banco y ERP responden 403 (cada uno con su formato de error).

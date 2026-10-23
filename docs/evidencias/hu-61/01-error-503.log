@@ -1,0 +1,36 @@
+2026-10-22T14:44:45.245-06:00  INFO 16716 --- [consumer] [main] o.consumer.ConsumerApplication           : Starting ConsumerApplication using Java 22.0.2 with PID 16716 (C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer\target\classes started by Enner Godoy in C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer)
+2026-10-22T14:44:45.248-06:00  INFO 16716 --- [consumer] [main] o.consumer.ConsumerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-22T14:44:46.459-06:00  INFO 16716 --- [consumer] [main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=6f9634d1-35f6-3af1-890b-9dd1c511f9a3
+2026-10-22T14:44:46.749-06:00  INFO 16716 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-10-22T14:44:46.775-06:00  INFO 16716 --- [consumer] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-22T14:44:46.776-06:00  INFO 16716 --- [consumer] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-22T14:44:46.904-06:00  INFO 16716 --- [consumer] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-22T14:44:46.905-06:00  INFO 16716 --- [consumer] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1599 ms
+2026-10-22T14:44:51.368-06:00  INFO 16716 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:44:51.450-06:00  INFO 16716 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-10-22T14:44:52.462-06:00  INFO 16716 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:44:52.465-06:00  INFO 16716 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2026-10-22T14:44:52.591-06:00  INFO 16716 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#4fa0ee7e:0/SimpleConnection@54496c2d [delegate=amqp://pagos_admin@127.0.0.1:5672/, localPort=54302]
+2026-10-22T14:44:52.680-06:00  INFO 16716 --- [consumer] [main] o.consumer.ConsumerApplication           : Started ConsumerApplication in 9.165 seconds (process running for 9.949)
+2026-10-22T14:45:29.050-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:32.150-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:45:33.098-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:35.507-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:35.909-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:40.240-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:42.038-06:00  WARN 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000001 NO entregado al banco tras 4 intento(s): Sin respuesta del banco (timeout o conexion)
+2026-10-22T14:45:42.672-06:00  WARN 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000001 NO contabilizado en el ERP tras 4 intento(s): El ERP respondio 503 SERVICIO_NO_DISPONIBLE
+2026-10-22T14:45:43.432-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:43.461-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:45.865-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:47.291-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:49.045-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:50.857-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:45:53.048-06:00  WARN 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000002 NO contabilizado en el ERP tras 4 intento(s): El ERP respondio 503 SERVICIO_NO_DISPONIBLE
+2026-10-22T14:45:54.498-06:00  WARN 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000002 NO entregado al banco tras 4 intento(s): El banco respondio 503 SERVICE_UNAVAILABLE
+2026-10-22T14:46:50.497-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T14:46:50.498-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T14:46:50.656-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T14:46:51.090-06:00  INFO 16716 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T14:46:51.094-06:00  INFO 16716 --- [consumer] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-22T14:46:51.100-06:00  INFO 16716 --- [consumer] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete

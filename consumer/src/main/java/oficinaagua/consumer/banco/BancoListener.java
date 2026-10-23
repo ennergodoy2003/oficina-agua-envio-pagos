@@ -36,6 +36,7 @@ public class BancoListener {
     public void recibir(MensajePago mensaje) {
         if (yaEntregado(mensaje.numeroDocumento())) {
             log.info("Pago {} ya estaba entregado al banco: no se vuelve a enviar", mensaje.numeroDocumento());
+            reanotar(mensaje);
             return; // ack: se descarta el mensaje repetido (HU-47)
         }
 
@@ -73,6 +74,18 @@ public class BancoListener {
         } catch (RuntimeException e) {
             log.error("No se pudo anotar en DynamoDB el intento del pago {}: {}",
                     r.numeroDocumento(), e.getMessage());
+        }
+
+    }
+
+    /** Linea EXITOSA de re-marca: no se reenvia, pero hace que la Lambda vuelva a poner el sello. */
+    private void reanotar(MensajePago m) {
+        try {
+            logs.guardar(RegistroIntento.nuevo(m.numeroDocumento(), Destino.BANCO, true,
+                    null, null, "Ya entregado antes: no se reenvia, se vuelve a marcar",
+                    m.correlationId(), null, null, null));
+        } catch (RuntimeException e) {
+            log.error("No se pudo re-anotar en DynamoDB el pago {}: {}", m.numeroDocumento(), e.getMessage());
         }
     }
 
