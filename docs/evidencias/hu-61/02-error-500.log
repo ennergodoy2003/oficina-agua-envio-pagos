@@ -1,0 +1,36 @@
+2026-10-22T14:50:08.015-06:00  INFO 4124 --- [consumer] [main] o.consumer.ConsumerApplication           : Starting ConsumerApplication using Java 22.0.2 with PID 4124 (C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer\target\classes started by Enner Godoy in C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer)
+2026-10-22T14:50:08.016-06:00  INFO 4124 --- [consumer] [main] o.consumer.ConsumerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-22T14:50:08.707-06:00  INFO 4124 --- [consumer] [main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=6f9634d1-35f6-3af1-890b-9dd1c511f9a3
+2026-10-22T14:50:08.939-06:00  INFO 4124 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-10-22T14:50:08.955-06:00  INFO 4124 --- [consumer] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-22T14:50:08.955-06:00  INFO 4124 --- [consumer] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-22T14:50:09.027-06:00  INFO 4124 --- [consumer] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-22T14:50:09.028-06:00  INFO 4124 --- [consumer] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 972 ms
+2026-10-22T14:50:11.106-06:00  INFO 4124 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:50:11.172-06:00  INFO 4124 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-10-22T14:50:12.185-06:00  INFO 4124 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:50:12.189-06:00  INFO 4124 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2026-10-22T14:50:12.262-06:00  INFO 4124 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#708dfe10:0/SimpleConnection@cb318ac [delegate=amqp://pagos_admin@127.0.0.1:5672/, localPort=64646]
+2026-10-22T14:50:12.331-06:00  INFO 4124 --- [consumer] [main] o.consumer.ConsumerApplication           : Started ConsumerApplication in 5.907 seconds (process running for 6.501)
+2026-10-22T14:50:41.431-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:50:41.947-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:50:44.706-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:50:45.286-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:50:46.945-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 4000 ms
+2026-10-22T14:50:47.593-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 4000 ms
+2026-10-22T14:50:52.384-06:00  WARN 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000001 NO entregado al banco tras 4 intento(s): El banco respondio 500 INTERNAL_ERROR
+2026-10-22T14:50:53.033-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:50:53.764-06:00  WARN 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000001 NO contabilizado en el ERP tras 4 intento(s): El ERP respondio 500 ERROR_INTERNO
+2026-10-22T14:50:55.453-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:50:56.658-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:50:58.392-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 2 de 4 fallido, se reintenta en 2000 ms
+2026-10-22T14:51:00.823-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 4000 ms
+2026-10-22T14:51:02.773-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] o.consumer.reintentos.Reintentador       : Intento 3 de 4 fallido, se reintenta en 4000 ms
+2026-10-22T14:51:05.079-06:00  WARN 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000002 NO entregado al banco tras 4 intento(s): El banco respondio 500 INTERNAL_ERROR
+2026-10-22T14:51:08.927-06:00  WARN 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000002 NO contabilizado en el ERP tras 4 intento(s): El ERP respondio 500 ERROR_INTERNO
+2026-10-22T14:51:46.669-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T14:51:46.671-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T14:51:47.199-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T14:51:47.371-06:00  INFO 4124 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T14:51:47.372-06:00  INFO 4124 --- [consumer] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-22T14:51:47.379-06:00  INFO 4124 --- [consumer] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete

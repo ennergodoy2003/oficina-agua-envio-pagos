@@ -1,0 +1,25 @@
+2026-10-22T14:59:26.820-06:00  INFO 15036 --- [consumer] [main] o.consumer.ConsumerApplication           : Starting ConsumerApplication using Java 22.0.2 with PID 15036 (C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer\target\classes started by Enner Godoy in C:\Users\Enner Godoy\oficina-agua-envio-pagos\consumer)
+2026-10-22T14:59:26.822-06:00  INFO 15036 --- [consumer] [main] o.consumer.ConsumerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-22T14:59:27.532-06:00  INFO 15036 --- [consumer] [main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=6f9634d1-35f6-3af1-890b-9dd1c511f9a3
+2026-10-22T14:59:27.766-06:00  INFO 15036 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-10-22T14:59:27.781-06:00  INFO 15036 --- [consumer] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-22T14:59:27.781-06:00  INFO 15036 --- [consumer] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-22T14:59:27.848-06:00  INFO 15036 --- [consumer] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-22T14:59:27.848-06:00  INFO 15036 --- [consumer] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 987 ms
+2026-10-22T14:59:29.872-06:00  INFO 15036 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:59:30.043-06:00  INFO 15036 --- [consumer] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-10-22T14:59:31.058-06:00  INFO 15036 --- [consumer] [main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2026-10-22T14:59:31.061-06:00  INFO 15036 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2026-10-22T14:59:31.159-06:00  INFO 15036 --- [consumer] [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#4fa0ee7e:0/SimpleConnection@54496c2d [delegate=amqp://pagos_admin@127.0.0.1:5672/, localPort=62179]
+2026-10-22T14:59:31.238-06:00  INFO 15036 --- [consumer] [main] o.consumer.ConsumerApplication           : Started ConsumerApplication in 6.046 seconds (process running for 6.575)
+2026-10-22T14:59:55.867-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000003 contabilizado en el ERP: Contabilizado en el ERP (comprobante ERP-20261022-E12W9U, partida PDA-2026-801424)
+2026-10-22T14:59:56.110-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.reintentos.Reintentador       : Intento 1 de 4 fallido, se reintenta en 1000 ms
+2026-10-22T14:59:58.116-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-1] oficinaagua.consumer.erp.ErpListener     : Pago EQA-000004 contabilizado en el ERP: Contabilizado en el ERP (comprobante ERP-20261022-GQOP7V, partida PDA-2026-077182)
+2026-10-22T14:59:59.623-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000003 entregado al banco: Entregado al banco (comprobante BNK-20261022-T611AU)
+2026-10-22T15:00:02.201-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] o.consumer.banco.BancoListener           : Pago EQA-000004 entregado al banco: Entregado al banco (comprobante BNK-20261022-IQI9YO)
+2026-10-22T15:07:38.731-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T15:07:38.732-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Waiting for workers to finish.
+2026-10-22T15:07:38.750-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#1-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T15:07:38.852-06:00  INFO 15036 --- [consumer] [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2] o.s.a.r.l.SimpleMessageListenerContainer : Successfully waited for workers to finish.
+2026-10-22T15:07:38.873-06:00  INFO 15036 --- [consumer] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-22T15:07:38.927-06:00  INFO 15036 --- [consumer] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
