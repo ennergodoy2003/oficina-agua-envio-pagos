@@ -138,15 +138,29 @@ class ErpListenerTest {
     }
 
     @Test
-    void pagoYaEntregado_noSeReenvia_yHaceAck() {
+    void pagoYaEntregado_noSeReenvia_yDejaLineaDeRemarca() {
         when(logs.yaEntregado("EQA-000001", Destino.ERP)).thenReturn(true);
 
         assertThatCode(() -> listener.recibir(mensaje())).doesNotThrowAnyException();
 
-        verify(servicio, never()).enviar(any());
-        verify(logs, never()).guardar(any());
+        verify(servicio, never()).enviar(any()); // no se llama al ERP
+        ArgumentCaptor<RegistroIntento> captor = ArgumentCaptor.forClass(RegistroIntento.class);
+        verify(logs).guardar(captor.capture()); // una sola linea, para que la Lambda re-marque
+        RegistroIntento r = captor.getValue();
+        assertThat(r.destino()).isEqualTo(Destino.ERP);
+        assertThat(r.resultado()).isEqualTo(RegistroIntento.EXITOSO);
+        assertThat(r.httpStatus()).isNull();
+        assertThat(r.detalle()).contains("se vuelve a marcar");
     }
 
+    @Test
+    void pagoYaEntregado_dynamoCaidoAlRemarcar_igualHaceAck() {
+        when(logs.yaEntregado("EQA-000001", Destino.ERP)).thenReturn(true);
+        doThrow(DynamoDbException.builder().message("DynamoDB caido").build()).when(logs).guardar(any());
+
+        assertThatCode(() -> listener.recibir(mensaje())).doesNotThrowAnyException();
+        verify(servicio, never()).enviar(any());
+    }
     @Test
     void siNoSePuedeRevisarDynamo_seEnviaIgual() {
         when(logs.yaEntregado(any(), any()))
