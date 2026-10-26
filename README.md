@@ -99,7 +99,7 @@ oficina-agua-envio-pagos/
    cd oficina-agua-envio-pagos
    ```
 
-2. **Preparar la base de datos.** Como `root`, ejecutar en orden los scripts de `db/`: `00` crea la tabla `pagos_envio`, `01` crea la vista `v_pagos_envio` y `02` crea los usuarios `pagos_ro` (solo lectura) y `lambda_flags` (solo INSERT en `pagos_envio`). Cambiar las contraseñas antes de ejecutarlos.
+2. **Preparar la base de datos.** Como `root`, ejecutar en orden los scripts de `db/`: `00` crea la tabla `pagos_envio`, `01` crea la vista `v_pagos_envio` y `02` crea los usuarios `pagos_ro` (solo lectura) y `lambda_flags` (solo INSERT en `pagos_envio`). Cambiar las contraseñas antes de ejecutarlos. Los scripts usan la base `proyecto_agua`; si usas otra, reemplaza ese nombre en los tres archivos y en `PAGOS_DB_NAME` del `.env`.
 
 3. **Crear el `.env`** a partir de la plantilla y completar las contraseñas:
 
@@ -185,7 +185,7 @@ Si `SIMULACION_ESCENARIO` tiene valor, el consumer manda el header `X-Simulation
 |---|---|
 | `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Usuario y contraseña de RabbitMQ. Obligatorias para el Compose. |
 | `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_MANAGEMENT_PORT` | Conexión a RabbitMQ y puerto del panel. |
-| `PAGOS_DB_*` | Conexión del producer a la base de pagos (usuario de solo lectura). |
+| `PAGOS_DB_*` | Conexión a la base de pagos. El producer la lee con un usuario de solo lectura y la Lambda toma de aquí el nombre de la base (`PAGOS_DB_NAME`). |
 | `BANCO_URL`, `BANCO_API_KEY`, `BANCO_TEAM_CODE` | Destino banco: URL, key y código de equipo. |
 | `ERP_URL`, `ERP_API_KEY`, `ERP_EQUIPO` | Destino ERP: URL, key y código de equipo. |
 | `BANCO_FALSO_PORT`, `ERP_FALSO_PORT` | Puertos de los destinos falsos (8089 y 8090). |
@@ -237,7 +237,9 @@ docker run --rm -v "${PWD}/lambda/marcar_flags:/app" -w /app python:3.12-slim \
 
 - **`docker compose` pide `RABBITMQ_USER`, `LAMBDA_DB_USER` u otra variable:** falta crear el `.env` o esa variable está vacía.
 - **La Lambda muestra `Can't connect to MySQL server ... Connection refused`:** MariaDB todavía no está encendido. La Lambda reintenta cada 5 s sola.
-- **La Lambda muestra `Access denied for user 'lambda_flags'@'localhost'`:** con Docker Desktop, MariaDB ve la conexión como `localhost`. Crear también `'lambda_flags'@'localhost'` con la misma contraseña y el mismo permiso.
+- **La Lambda muestra `Access denied for user 'lambda_flags'`:** el usuario debe existir con host `'%'`, porque la Lambda se conecta desde un contenedor de Docker. Ver `db/02-usuarios.sql`.
+- **El producer muestra `Access denied for user 'pagos_ro'@'127.0.0.1'`:** según cómo se conecte Java, MariaDB lo identifica como `localhost` o como `127.0.0.1`; el usuario necesita el permiso en los dos. Ver `db/02-usuarios.sql`.
+- **Cambié `PAGOS_DB_NAME` y la Lambda sigue en la base anterior:** `docker compose restart` no vuelve a leer el `.env`. Hay que recrearla con `docker compose up -d lambda-marcar-flags` y comprobarlo con `docker compose exec lambda-marcar-flags printenv DB_NAME`.
 - **El producer publica 0 mensajes:** todos los pagos ya tienen marca en `pagos_envio`.
 - **Cambié el `.env` y el consumer sigue igual:** el consumer lee el `.env` solo al arrancar; hay que reiniciarlo.
 - **`mvn test` dice que no hay POM:** se ejecutó en la raíz; hay que entrar a `consumer/` o `producer/`.
