@@ -1,5 +1,7 @@
 -- Vista que lee el producer (HU-43). Un pago por fila, con sus dos flags de envio.
-CREATE OR REPLACE VIEW keko_copia.v_pagos_envio AS
+-- Base: proyecto_agua. Cada tabla va con su base para que la vista no dependa
+-- de la base seleccionada al crearla.
+CREATE OR REPLACE VIEW proyecto_agua.v_pagos_envio AS
 SELECT
     p.id AS id,
     CONCAT('EQA-', LPAD(p.id, 6, '0')) AS numero_documento,
@@ -16,12 +18,12 @@ SELECT
     p.metodo AS forma_pago,
     IF(eb.pago_id IS NULL, 'PENDIENTE', 'ENVIADO') AS estado_envio_banco,
     IF(ee.pago_id IS NULL, 'PENDIENTE', 'ENVIADO') AS estado_envio_erp
-FROM pagos p
-LEFT JOIN recibos r ON r.id = p.recibo_id
-JOIN lecturas l ON l.id = COALESCE(p.lectura_id, r.lectura_id)
-JOIN servicios s ON s.id = l.servicio_id
-JOIN clientes c ON c.id = s.cliente_id
-JOIN contadores ct ON ct.id = l.contador_id
-JOIN periodos pe ON pe.id = l.periodo_id
-LEFT JOIN pagos_envio eb ON eb.pago_id = p.id AND eb.destino = 'BANCO'
-LEFT JOIN pagos_envio ee ON ee.pago_id = p.id AND ee.destino = 'ERP';
+FROM proyecto_agua.pagos p
+LEFT JOIN proyecto_agua.recibos r ON r.id = p.recibo_id
+JOIN proyecto_agua.lecturas l ON l.id = COALESCE(p.lectura_id, r.lectura_id)
+JOIN proyecto_agua.servicios s ON s.id = l.servicio_id
+JOIN proyecto_agua.clientes c ON c.id = s.cliente_id
+JOIN proyecto_agua.contadores ct ON ct.id = l.contador_id
+JOIN proyecto_agua.periodos pe ON pe.id = l.periodo_id
+LEFT JOIN proyecto_agua.pagos_envio eb ON eb.pago_id = p.id AND eb.destino = 'BANCO'
+LEFT JOIN proyecto_agua.pagos_envio ee ON ee.pago_id = p.id AND ee.destino = 'ERP';
